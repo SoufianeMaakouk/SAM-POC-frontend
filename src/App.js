@@ -1,8 +1,9 @@
 import { useState } from "react";
 import Navbar from "./components/Navbar";
+
+import PlansView from "./views/PlansView";
 import UploadTEAP from "./views/UploadTEAP";
 import ConflictView from "./views/ConflictView";
-import PlansView from "./views/PlansView";
 import CatalogueView from "./views/CatalogueView";
 import VenuesView from "./views/VenuesView";
 
