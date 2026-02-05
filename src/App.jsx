@@ -1,24 +1,21 @@
 import { useState } from "react";
-import Navbar from "./components/Navbar";
+import UploadTEAP from "./UploadTEAP";
+import ConflictView from "./ConflictView";
 
-import PlansView from "./views/PlansView";
-import UploadTEAP from "./views/UploadTEAP";
-import ConflictView from "./views/ConflictView";
-import CatalogueView from "./views/CatalogueView";
-import VenuesView from "./views/VenuesView";
-
-export default function App() {
-  const [view, setView] = useState("plans");
+function App() {
+  const [view, setView] = useState("upload");
 
   return (
     <>
-      <Navbar setView={setView} />
+      <h1>SAM – TEAP POC</h1>
 
-      {view === "plans" && <PlansView />}
+      <button onClick={() => setView("upload")}>Upload TEAP</button>
+      <button onClick={() => setView("conflicts")}>Conflicts</button>
+
       {view === "upload" && <UploadTEAP />}
       {view === "conflicts" && <ConflictView />}
-      {view === "catalogue" && <CatalogueView />}
-      {view === "venues" && <VenuesView />}
     </>
   );
 }
+
+export default App;
