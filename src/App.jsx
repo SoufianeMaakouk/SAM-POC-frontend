@@ -1,23 +1,25 @@
 import { useState } from "react";
-import Navbar from "./components/Navbar.jsx";
-
-import UploadTEAP from "./views/UploadTEAP.jsx";
-import ConflictView from "./views/ConflictView.jsx";
-import CatalogueView from "./views/CatalogueView.jsx";
-import VenuesView from "./views/VenuesView.jsx";
-import PlansView from "./views/PlansView.jsx";
+import UploadTEAP from "./components/UploadTEAP";
+import Summary from "./components/Summary";
+import EquipmentTable from "./components/EquipmentTable";
+import DemandTable from "./components/DemandTable";
 
 export default function App() {
-  const [view, setView] = useState("upload");
+  const [result, setResult] = useState(null);
 
   return (
-    <>
-      <Navbar setView={setView} />
-      {view === "upload" && <UploadTEAP />}
-      {view === "conflicts" && <ConflictView />}
-      {view === "catalogue" && <CatalogueView />}
-      {view === "venues" && <VenuesView />}
-      {view === "plans" && <PlansView />}
-    </>
+    <div style={{ padding: "20px" }}>
+      <h1>SAM – TEAP Analyzer</h1>
+
+      <UploadTEAP onResult={setResult} />
+
+      {result && (
+        <>
+          <Summary summary={result.summary} />
+          <EquipmentTable equipment={result.preview.equipment} />
+          <DemandTable demands={result.preview.demands} />
+        </>
+      )}
+    </div>
   );
 }
