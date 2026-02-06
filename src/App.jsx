@@ -1,6 +1,6 @@
 import { useState } from "react";
-import UploadTEAP from "./UploadTEAP";
-import ConflictView from "./ConflictView";
+import UploadTEAP from "./UploadTEAP.jsx";
+import ConflictView from "./ConflictView.jsx";
 
 function App() {
   const [view, setView] = useState("upload");
