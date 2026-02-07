@@ -9,7 +9,7 @@ export default function App() {
   const [result, setResult] = useState(null);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: 20 }}>
       <h1>SAM – TEAP Analyzer</h1>
 
       <UploadTEAP onResult={setResult} />
