@@ -4,13 +4,14 @@ export async function uploadTEAP(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_URL}/upload`, {
+  const res = await fetch(`${API_URL}/upload/teap`, {
     method: "POST",
-    body: formData
+    body: formData,
   });
 
   if (!res.ok) {
-    throw new Error("Upload failed");
+    const text = await res.text();
+    throw new Error(text || "Upload failed");
   }
 
   return res.json();
