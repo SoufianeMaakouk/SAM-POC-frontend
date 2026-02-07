@@ -4,48 +4,37 @@ import { uploadTEAP } from "../api";
 export default function UploadTEAP({ onResult }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   const handleUpload = async () => {
-    if (!file) {
-      setError("Please select a TEAP Excel file first.");
-      return;
-    }
+    if (!file) return;
 
     setLoading(true);
-    setError(null);
+    setError("");
 
     try {
       const result = await uploadTEAP(file);
       onResult(result);
     } catch (err) {
-      setError(err.message || "Upload failed");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ marginBottom: 20 }}>
-      <h3>Upload TEAP Excel</h3>
-
+    <div>
       <input
         type="file"
         accept=".xlsx,.xls"
-        onChange={(e) => setFile(e.target.files[0])}
+        onChange={e => setFile(e.target.files[0])}
       />
 
-      <br /><br />
-
       <button onClick={handleUpload} disabled={loading}>
-        {loading ? "Uploading..." : "Upload"}
+        {loading ? "Uploading..." : "Upload TEAP"}
       </button>
 
-      {error && (
-        <p style={{ color: "red", marginTop: 10 }}>
-          {error}
-        </p>
-      )}
+      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 }
