@@ -1,8 +1,9 @@
 import { useState } from "react";
-import UploadTEAP from "./components/UploadTEAP";
-import Summary from "./components/Summary";
-import EquipmentTable from "./components/EquipmentTable";
-import DemandTable from "./components/DemandTable";
+
+import UploadTEAP from "./components/UploadTEAP.jsx";
+import Summary from "./components/Summary.jsx";
+import EquipmentTable from "./components/EquipmentTable.jsx";
+import DemandTable from "./components/DemandTable.jsx";
 
 export default function App() {
   const [result, setResult] = useState(null);
