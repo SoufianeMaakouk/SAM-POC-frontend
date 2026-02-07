@@ -10,8 +10,7 @@ export async function uploadTEAP(file) {
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Upload failed");
+    throw new Error(await res.text());
   }
 
   return res.json();
