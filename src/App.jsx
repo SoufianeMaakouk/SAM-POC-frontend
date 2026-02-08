@@ -1,24 +1,21 @@
-import { useState } from "react";
 import Allocations from "./pages/Allocations.jsx";
 import Deliveries from "./pages/Deliveries.jsx";
 import Admin from "./pages/Admin.jsx";
 
 export default function App() {
-  const [page, setPage] = useState("admin");
-
   return (
-    <div style={{ padding: 20 }}>
+    <>
       <h1>SAM – Logistics Platform</h1>
 
-      <button onClick={() => setPage("admin")}>Admin</button>
-      <button onClick={() => setPage("allocations")}>Allocations</button>
-      <button onClick={() => setPage("deliveries")}>Delivery Sheet</button>
+      <nav style={{ marginBottom: 20 }}>
+        <a href="/">Allocations</a> |{" "}
+        <a href="/deliveries">Delivery Sheet</a> |{" "}
+        <a href="/admin">Admin</a>
+      </nav>
 
-      <hr />
-
-      {page === "admin" && <Admin />}
-      {page === "allocations" && <Allocations />}
-      {page === "deliveries" && <Deliveries />}
-    </div>
+      {window.location.pathname === "/deliveries" && <Deliveries />}
+      {window.location.pathname === "/admin" && <Admin />}
+      {window.location.pathname === "/" && <Allocations />}
+    </>
   );
 }
