@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getDeliveries } from "../services/api.js";
 
 export default function Deliveries() {
-  const [deliveries, setDeliveries] = useState([]);
+  const [sheet, setSheet] = useState({});
 
   useEffect(() => {
     load();
@@ -10,42 +10,27 @@ export default function Deliveries() {
 
   const load = async () => {
     const data = await getDeliveries();
-    setDeliveries(data);
+    setSheet(data);
   };
 
   return (
     <>
       <h2>Delivery Sheet</h2>
 
-      {deliveries.length === 0 && <p>No deliveries yet</p>}
+      {Object.keys(sheet).length === 0 && (
+        <p>No deliveries yet</p>
+      )}
 
-      {deliveries.map((d, idx) => (
-        <div
-          key={idx}
-          style={{
-            border: "1px solid #ccc",
-            padding: 12,
-            marginBottom: 16
-          }}
-        >
-          <h3>Venue: {d.venue}</h3>
-
-          <table width="100%" border="1" cellPadding="6">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {d.items.map((i, index) => (
-                <tr key={index}>
-                  <td>{i.item}</td>
-                  <td>{i.quantity}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {Object.entries(sheet).map(([venue, items]) => (
+        <div key={venue} style={{ marginBottom: 20 }}>
+          <h3>{venue}</h3>
+          <ul>
+            {Object.entries(items).map(([item, qty]) => (
+              <li key={item}>
+                {item}: {qty}
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </>
