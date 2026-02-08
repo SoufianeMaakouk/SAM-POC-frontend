@@ -28,3 +28,26 @@ export const getDeliveries = async () => {
   const res = await fetch(`${API}/deliveries`);
   return res.json();
 };
+
+/* CREATE */
+export const createItem = async (data) =>
+  fetch(`${API}/items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+export const createFA = async (data) =>
+  fetch(`${API}/functional-areas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+export const createVenue = async (data) =>
+  fetch(`${API}/venues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
