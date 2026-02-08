@@ -1,14 +1,18 @@
 const API = "https://sam-poc-backend.onrender.com";
 
+/* ITEMS */
 export const getItems = async () =>
   (await fetch(`${API}/items`)).json();
 
+/* FUNCTIONAL AREAS */
 export const getFAs = async () =>
   (await fetch(`${API}/functional-areas`)).json();
 
+/* VENUES */
 export const getVenues = async () =>
   (await fetch(`${API}/venues`)).json();
 
+/* ALLOCATIONS */
 export const getAllocations = async () =>
   (await fetch(`${API}/allocations`)).json();
 
@@ -19,11 +23,8 @@ export const createAllocation = async (data) =>
     body: JSON.stringify(data)
   });
 
-export const getDeliveries = async () =>
-  (await fetch(`${API}/deliveries`)).json();
-
+/* DELIVERIES */
 export const getDeliveries = async () => {
   const res = await fetch(`${API}/deliveries`);
   return res.json();
 };
-
