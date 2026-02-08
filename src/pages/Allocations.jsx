@@ -20,6 +20,10 @@ export default function Allocations() {
     quantity: ""
   });
 
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     loadAll();
   }, []);
@@ -32,56 +36,89 @@ export default function Allocations() {
   };
 
   const submit = async () => {
-    await createAllocation(form);
-    setForm({ item: "", functionalArea: "", venue: "", quantity: "" });
-    loadAll();
+    setError("");
+    setSuccess("");
+
+    if (!form.item || !form.quantity) {
+      setError("Please select an item and enter a quantity");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await createAllocation({
+        ...form,
+        quantity: Number(form.quantity)
+      });
+
+      setSuccess("Allocation created successfully");
+      setForm({
+        item: "",
+        functionalArea: "",
+        venue: "",
+        quantity: ""
+      });
+
+      loadAll();
+    } catch (err) {
+      setError(err.message || "Allocation failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <h2>Create Allocation</h2>
 
-      <select onChange={e => setForm({ ...form, item: e.target.value })}>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {success && <p style={{ color: "green" }}>{success}</p>}
+
+      <select
+        value={form.item}
+        onChange={e => setForm({ ...form, item: e.target.value })}
+      >
         <option value="">Select Item</option>
         {items.map(i => (
-          <option key={i._id} value={i._id}>{i.name}</option>
+          <option key={i._id} value={i._id}>
+            {i.name}
+          </option>
         ))}
       </select>
 
-      <select onChange={e => setForm({ ...form, functionalArea: e.target.value })}>
+      <select
+        value={form.functionalArea}
+        onChange={e =>
+          setForm({ ...form, functionalArea: e.target.value })
+        }
+      >
         <option value="">Select Functional Area</option>
         {fas.map(f => (
-          <option key={f._id} value={f._id}>{f.name}</option>
+          <option key={f._id} value={f._id}>
+            {f.name}
+          </option>
         ))}
       </select>
 
-      <select onChange={e => setForm({ ...form, venue: e.target.value })}>
+      <select
+        value={form.venue}
+        onChange={e => setForm({ ...form, venue: e.target.value })}
+      >
         <option value="">Select Venue</option>
         {venues.map(v => (
-          <option key={v._id} value={v._id}>{v.name}</option>
+          <option key={v._id} value={v._id}>
+            {v.name}
+          </option>
         ))}
       </select>
 
       <input
         type="number"
         placeholder="Quantity"
+        min="1"
         value={form.quantity}
         onChange={e => setForm({ ...form, quantity: e.target.value })}
       />
 
-      <button onClick={submit}>Allocate</button>
-
-      <hr />
-
-      <h3>Existing Allocations</h3>
-
-      <ul>
-        {allocations.map(a => (
-          <li key={a._id}>
-            {a.item?.name} – {a.functionalArea?.name} – {a.venue?.name} – {a.quantity}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
+      <butt
