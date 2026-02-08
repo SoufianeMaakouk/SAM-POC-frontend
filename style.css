@@ -1,0 +1,33 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 30px;
+  background: #f7f7f7;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.controls {
+  margin-bottom: 20px;
+}
+
+select, button {
+  padding: 8px;
+  margin-left: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+th {
+  background: #efefef;
+}
