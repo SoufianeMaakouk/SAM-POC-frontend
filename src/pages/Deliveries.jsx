@@ -5,31 +5,43 @@ export default function Deliveries() {
   const [deliveries, setDeliveries] = useState([]);
 
   useEffect(() => {
-    getDeliveries().then(setDeliveries);
+    load();
   }, []);
+
+  const load = async () => {
+    const data = await getDeliveries();
+    setDeliveries(data);
+  };
 
   return (
     <>
       <h2>Delivery Sheet</h2>
 
-      {deliveries.map(venue => (
-        <div key={venue.venueId} style={{ marginBottom: 20 }}>
-          <h3>{venue.venue}</h3>
+      {deliveries.length === 0 && <p>No deliveries yet</p>}
 
-          <table border="1" cellPadding="6">
+      {deliveries.map((d, idx) => (
+        <div
+          key={idx}
+          style={{
+            border: "1px solid #ccc",
+            padding: 12,
+            marginBottom: 16
+          }}
+        >
+          <h3>Venue: {d.venue}</h3>
+
+          <table width="100%" border="1" cellPadding="6">
             <thead>
               <tr>
                 <th>Item</th>
                 <th>Quantity</th>
-                <th>Functional Areas</th>
               </tr>
             </thead>
             <tbody>
-              {venue.items.map((i, idx) => (
-                <tr key={idx}>
+              {d.items.map((i, index) => (
+                <tr key={index}>
                   <td>{i.item}</td>
                   <td>{i.quantity}</td>
-                  <td>{i.functionalAreas.join(", ")}</td>
                 </tr>
               ))}
             </tbody>
