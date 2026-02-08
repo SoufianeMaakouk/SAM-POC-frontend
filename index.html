@@ -1,36 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>SAM – Delivery Sheet</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-
-  <h1>SAM – Delivery Sheet</h1>
-
-  <section class="controls">
-    <label for="venueSelect">Select Venue:</label>
-    <select id="venueSelect">
-      <option value="">Loading venues...</option>
-    </select>
-
-    <button id="loadDelivery">Generate Delivery Sheet</button>
-  </section>
-
-  <table id="deliveryTable">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Functional Area</th>
-        <th>Quantity</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- rows injected here -->
-    </tbody>
-  </table>
-
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SAM – Logistics Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
