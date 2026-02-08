@@ -115,10 +115,28 @@ export default function Allocations() {
 
       <input
         type="number"
-        placeholder="Quantity"
         min="1"
+        placeholder="Quantity"
         value={form.quantity}
         onChange={e => setForm({ ...form, quantity: e.target.value })}
       />
 
-      <butt
+      <button onClick={submit} disabled={loading}>
+        {loading ? "Allocating..." : "Allocate"}
+      </button>
+
+      <hr />
+
+      <h3>Existing Allocations</h3>
+
+      <ul>
+        {allocations.map(a => (
+          <li key={a._id}>
+            {a.item?.name} – {a.functionalArea?.name} – {a.venue?.name} –{" "}
+            {a.quantity}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
