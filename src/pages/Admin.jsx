@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API = "https://YOUR-BACKEND.onrender.com";
+const API = "https://sam-poc-backend.onrender.com";
 
 export default function Admin() {
   const [name, setName] = useState("");
