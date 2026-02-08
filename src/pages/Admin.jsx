@@ -4,13 +4,30 @@ const API = "https://sam-poc-backend.onrender.com";
 
 export default function Admin() {
   const [name, setName] = useState("");
+  const [totalQuantity, setTotalQuantity] = useState("");
 
-  const create = async (path) => {
+  const createItem = async () => {
+    await fetch(`${API}/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        totalQuantity: Number(totalQuantity)
+      })
+    });
+
+    setName("");
+    setTotalQuantity("");
+    alert("Item created");
+  };
+
+  const createSimple = async (path) => {
     await fetch(`${API}/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name })
     });
+
     setName("");
     alert("Created");
   };
@@ -25,15 +42,22 @@ export default function Admin() {
         onChange={e => setName(e.target.value)}
       />
 
-      <div style={{ marginTop: 10 }}>
-        <button onClick={() => create("items")}>Add Item</button>
-        <button onClick={() => create("functional-areas")}>Add Functional Area</button>
-        <button onClick={() => create("venues")}>Add Venue</button>
-      </div>
+      <input
+        placeholder="Total Quantity (for items)"
+        type="number"
+        value={totalQuantity}
+        onChange={e => setTotalQuantity(e.target.value)}
+      />
 
-      <p style={{ marginTop: 10, color: "#555" }}>
-        (Temporary admin panel – will be improved later)
-      </p>
+      <div style={{ marginTop: 10 }}>
+        <button onClick={createItem}>Add Item</button>
+        <button onClick={() => createSimple("functional-areas")}>
+          Add Functional Area
+        </button>
+        <button onClick={() => createSimple("venues")}>
+          Add Venue
+        </button>
+      </div>
     </>
   );
 }
