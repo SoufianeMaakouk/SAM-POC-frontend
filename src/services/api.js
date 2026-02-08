@@ -1,4 +1,4 @@
-const API = "https://YOUR-BACKEND.onrender.com";
+const API = "https://sam-poc-backend.onrender.com";
 
 export const getItems = async () =>
   (await fetch(`${API}/items`)).json();
