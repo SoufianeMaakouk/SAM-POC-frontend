@@ -1,63 +1,51 @@
-import { useState } from "react";
-
-const API = "https://sam-poc-backend.onrender.com";
+import { useEffect, useState } from "react";
+import { getItems, getFAs, getVenues } from "../services/api";
 
 export default function Admin() {
-  const [name, setName] = useState("");
-  const [totalQuantity, setTotalQuantity] = useState("");
+  const [items, setItems] = useState([]);
+  const [fas, setFAs] = useState([]);
+  const [venues, setVenues] = useState([]);
 
-  const createItem = async () => {
-    await fetch(`${API}/items`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        totalQuantity: Number(totalQuantity)
-      })
-    });
+  useEffect(() => {
+    loadData();
+  }, []);
 
-    setName("");
-    setTotalQuantity("");
-    alert("Item created");
-  };
-
-  const createSimple = async (path) => {
-    await fetch(`${API}/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name })
-    });
-
-    setName("");
-    alert("Created");
+  const loadData = async () => {
+    setItems(await getItems());
+    setFAs(await getFAs());
+    setVenues(await getVenues());
   };
 
   return (
-    <>
-      <h2>Admin – Create Base Data</h2>
+    <div>
+      <h2>Admin</h2>
 
-      <input
-        placeholder="Name"
-        value={name}
-        onChange={e => setName(e.target.value)}
-      />
+      <section>
+        <h3>Items</h3>
+        <ul>
+          {items.map(i => (
+            <li key={i._id}>{i.name}</li>
+          ))}
+        </ul>
+      </section>
 
-      <input
-        placeholder="Total Quantity (for items)"
-        type="number"
-        value={totalQuantity}
-        onChange={e => setTotalQuantity(e.target.value)}
-      />
+      <section>
+        <h3>Functional Areas</h3>
+        <ul>
+          {fas.map(f => (
+            <li key={f._id}>{f.name}</li>
+          ))}
+        </ul>
+      </section>
 
-      <div style={{ marginTop: 10 }}>
-        <button onClick={createItem}>Add Item</button>
-        <button onClick={() => createSimple("functional-areas")}>
-          Add Functional Area
-        </button>
-        <button onClick={() => createSimple("venues")}>
-          Add Venue
-        </button>
-      </div>
-    </>
+      <section>
+        <h3>Venues</h3>
+        <ul>
+          {venues.map(v => (
+            <li key={v._id}>{v.name}</li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
