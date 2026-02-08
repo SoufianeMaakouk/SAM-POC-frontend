@@ -1,21 +1,23 @@
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
+import Admin from "./pages/Admin.jsx";
 import Allocations from "./pages/Allocations.jsx";
 import Deliveries from "./pages/Deliveries.jsx";
-import Admin from "./pages/Admin.jsx";
 
 export default function App() {
   return (
-    <>
-      <h1>SAM – Logistics Platform</h1>
-
+    <BrowserRouter>
       <nav style={{ marginBottom: 20 }}>
-        <a href="/">Allocations</a> |{" "}
-        <a href="/deliveries">Delivery Sheet</a> |{" "}
-        <a href="/admin">Admin</a>
+        <Link to="/">Allocations</Link>{" | "}
+        <Link to="/admin">Admin</Link>{" | "}
+        <Link to="/deliveries">Delivery Sheet</Link>
       </nav>
 
-      {window.location.pathname === "/deliveries" && <Deliveries />}
-      {window.location.pathname === "/admin" && <Admin />}
-      {window.location.pathname === "/" && <Allocations />}
-    </>
+      <Routes>
+        <Route path="/" element={<Allocations />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/deliveries" element={<Deliveries />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
