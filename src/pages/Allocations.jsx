@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   getItems,
+  getItemSummary,
   getFAs,
   getVenues,
   getSubVenues,
@@ -16,6 +17,7 @@ export default function Allocations() {
   const [subVenues, setSubVenues] = useState([]);
   const [spaces, setSpaces] = useState([]);
   const [allocations, setAllocations] = useState([]);
+  const [itemDetails, setItemDetails] = useState(null);
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
@@ -38,24 +40,51 @@ export default function Allocations() {
     setAllocations(await getAllocations());
   };
 
+  /* ITEM SELECT */
+  const selectItem = async itemId => {
+    setForm({ ...form, item: itemId });
+
+    if (!itemId) {
+      setItemDetails(null);
+      return;
+    }
+
+    const summary = await getItemSummary(itemId);
+    setItemDetails(summary);
+  };
+
+  /* VENUE SELECT */
   const selectVenue = async venueId => {
     setForm({ ...form, venue: venueId, subVenue: "", space: "" });
     setSubVenues(await getSubVenues(venueId));
     setSpaces([]);
   };
 
+  /* SUBVENUE SELECT */
   const selectSubVenue = async subVenueId => {
     setForm({ ...form, subVenue: subVenueId, space: "" });
     setSpaces(await getSpaces(subVenueId));
   };
 
+  /* SUBMIT */
   const submit = async () => {
     try {
       setError("");
+
+      if (
+        !form.item ||
+        !form.functionalArea ||
+        !form.venue ||
+        !form.quantity
+      ) {
+        return setError("Please fill all required fields");
+      }
+
       await createAllocation({
         ...form,
         quantity: Number(form.quantity)
       });
+
       setForm({
         item: "",
         functionalArea: "",
@@ -64,9 +93,11 @@ export default function Allocations() {
         space: "",
         quantity: ""
       });
+
+      setItemDetails(null);
       loadBase();
     } catch (e) {
-      setError(e.error || "Allocation failed");
+      setError(e.message || "Allocation failed");
     }
   };
 
@@ -76,31 +107,79 @@ export default function Allocations() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <select onChange={e => setForm({ ...form, item: e.target.value })}>
-        <option value="">Item</option>
-        {items.map(i => <option key={i._id} value={i._id}>{i.name}</option>)}
+      {/* ITEM */}
+      <select value={form.item} onChange={e => selectItem(e.target.value)}>
+        <option value="">Select Item</option>
+        {items.map(i => (
+          <option key={i._id} value={i._id}>
+            {i.name}
+          </option>
+        ))}
       </select>
 
-      <select onChange={e => setForm({ ...form, functionalArea: e.target.value })}>
+      {/* ITEM DETAILS */}
+      {itemDetails && (
+        <div style={{ margin: "10px 0", padding: 10, border: "1px solid #ccc" }}>
+          <strong>Item details</strong>
+          <div>Code: {itemDetails.code || "—"}</div>
+          <div>Total quantity: {itemDetails.totalQuantity}</div>
+          <div>Allocated: {itemDetails.allocated}</div>
+          <div>Remaining: {itemDetails.remaining}</div>
+        </div>
+      )}
+
+      {/* FUNCTIONAL AREA */}
+      <select
+        value={form.functionalArea}
+        onChange={e => setForm({ ...form, functionalArea: e.target.value })}
+      >
         <option value="">Functional Area</option>
-        {fas.map(f => <option key={f._id} value={f._id}>{f.name}</option>)}
+        {fas.map(f => (
+          <option key={f._id} value={f._id}>
+            {f.name}
+          </option>
+        ))}
       </select>
 
-      <select onChange={e => selectVenue(e.target.value)}>
+      {/* VENUE */}
+      <select value={form.venue} onChange={e => selectVenue(e.target.value)}>
         <option value="">Venue</option>
-        {venues.map(v => <option key={v._id} value={v._id}>{v.name}</option>)}
+        {venues.map(v => (
+          <option key={v._id} value={v._id}>
+            {v.name}
+          </option>
+        ))}
       </select>
 
-      <select onChange={e => selectSubVenue(e.target.value)}>
+      {/* SUB VENUE */}
+      <select
+        value={form.subVenue}
+        onChange={e => selectSubVenue(e.target.value)}
+        disabled={!subVenues.length}
+      >
         <option value="">SubVenue</option>
-        {subVenues.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+        {subVenues.map(s => (
+          <option key={s._id} value={s._id}>
+            {s.name}
+          </option>
+        ))}
       </select>
 
-      <select onChange={e => setForm({ ...form, space: e.target.value })}>
+      {/* SPACE */}
+      <select
+        value={form.space}
+        onChange={e => setForm({ ...form, space: e.target.value })}
+        disabled={!spaces.length}
+      >
         <option value="">Space</option>
-        {spaces.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+        {spaces.map(s => (
+          <option key={s._id} value={s._id}>
+            {s.name}
+          </option>
+        ))}
       </select>
 
+      {/* QUANTITY */}
       <input
         type="number"
         placeholder="Quantity"
@@ -116,7 +195,8 @@ export default function Allocations() {
       <ul>
         {allocations.map(a => (
           <li key={a._id}>
-            {a.item?.name} → {a.space?.name || a.venue?.name} — {a.quantity}
+            {a.item?.name} → {a.space?.name || a.subVenue?.name || a.venue?.name} —{" "}
+            {a.quantity}
           </li>
         ))}
       </ul>
