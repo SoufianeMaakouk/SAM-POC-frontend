@@ -89,3 +89,15 @@ export const getDeliveries = async () =>
 
 export const getDeliverySheet = async () =>
   (await fetch(`${API}/deliveries/sheet`)).json();
+
+
+/* =========================
+   ALLOCATION STATUS
+   ========================= */
+
+export const updateAllocationStatus = async (id, status) =>
+  fetch(`${API}/allocations/${id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
