@@ -6,14 +6,16 @@ import {
   getAllocations,
   createAllocation,
   getItemSummary
-} from "../services/api.js";
+} from "../services/api";
 
 export default function Allocations() {
   const [items, setItems] = useState([]);
   const [fas, setFAs] = useState([]);
   const [venues, setVenues] = useState([]);
   const [allocations, setAllocations] = useState([]);
+
   const [itemSummary, setItemSummary] = useState(null);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     item: "",
@@ -33,18 +35,37 @@ export default function Allocations() {
     setAllocations(await getAllocations());
   };
 
+  /* When item changes → load availability */
   const onItemChange = async (itemId) => {
-    setForm({ ...form, item: itemId });
+    setForm({ ...form, item: itemId, quantity: "" });
+    setError("");
+
+    if (!itemId) {
+      setItemSummary(null);
+      return;
+    }
+
     const summary = await getItemSummary(itemId);
     setItemSummary(summary);
   };
 
+  /* Quantity validation */
+  const onQuantityChange = (value) => {
+    if (!itemSummary) return;
+
+    if (Number(value) > itemSummary.remaining) {
+      setError("Quantity exceeds remaining stock");
+    } else {
+      setError("");
+    }
+
+    setForm({ ...form, quantity: value });
+  };
+
   const submit = async () => {
-    if (
-      itemSummary &&
-      Number(form.quantity) > itemSummary.remainingQuantity
-    ) {
-      alert("Not enough remaining quantity");
+    if (error) return;
+    if (!form.item || !form.functionalArea || !form.venue || !form.quantity) {
+      alert("All fields required");
       return;
     }
 
@@ -59,78 +80,77 @@ export default function Allocations() {
   };
 
   return (
-    <>
+    <div>
       <h2>Create Allocation</h2>
 
-      <select onChange={e => onItemChange(e.target.value)} value={form.item}>
+      {/* ITEM */}
+      <select value={form.item} onChange={e => onItemChange(e.target.value)}>
         <option value="">Select Item</option>
         {items.map(i => (
-          <option key={i._id} value={i._id}>
-            {i.name}
-          </option>
+          <option key={i._id} value={i._id}>{i.name}</option>
         ))}
       </select>
 
+      {/* ITEM AVAILABILITY */}
       {itemSummary && (
         <div style={{ margin: "10px 0", padding: 10, border: "1px solid #ccc" }}>
-          <strong>Item Details</strong>
-          <div>Code: {itemSummary.code || "—"}</div>
+          <strong>Item Availability</strong>
           <div>Total: {itemSummary.totalQuantity}</div>
-          <div>Allocated: {itemSummary.allocatedQuantity}</div>
-          <div>
-            Remaining: <b>{itemSummary.remainingQuantity}</b>
-          </div>
+          <div>Allocated: {itemSummary.allocated}</div>
+          <div>Remaining: {itemSummary.remaining}</div>
         </div>
       )}
 
+      {/* FUNCTIONAL AREA */}
       <select
-        onChange={e =>
-          setForm({ ...form, functionalArea: e.target.value })
-        }
         value={form.functionalArea}
+        onChange={e => setForm({ ...form, functionalArea: e.target.value })}
       >
         <option value="">Select Functional Area</option>
         {fas.map(f => (
-          <option key={f._id} value={f._id}>
-            {f.name}
-          </option>
+          <option key={f._id} value={f._id}>{f.name}</option>
         ))}
       </select>
 
+      {/* VENUE */}
       <select
-        onChange={e => setForm({ ...form, venue: e.target.value })}
         value={form.venue}
+        onChange={e => setForm({ ...form, venue: e.target.value })}
       >
         <option value="">Select Venue</option>
         {venues.map(v => (
-          <option key={v._id} value={v._id}>
-            {v.name}
-          </option>
+          <option key={v._id} value={v._id}>{v.name}</option>
         ))}
       </select>
 
+      {/* QUANTITY */}
       <input
         type="number"
         placeholder="Quantity"
         value={form.quantity}
-        onChange={e =>
-          setForm({ ...form, quantity: e.target.value })
-        }
+        onChange={e => onQuantityChange(e.target.value)}
       />
 
-      <button onClick={submit}>Allocate</button>
+      {error && <div style={{ color: "red" }}>{error}</div>}
+
+      <button
+        onClick={submit}
+        disabled={!!error || (itemSummary && itemSummary.remaining === 0)}
+      >
+        Allocate
+      </button>
 
       <hr />
 
       <h3>Existing Allocations</h3>
+
       <ul>
         {allocations.map(a => (
           <li key={a._id}>
-            {a.item?.name} – {a.functionalArea?.name} –{" "}
-            {a.venue?.name} – {a.quantity}
+            {a.item?.name} – {a.functionalArea?.name} – {a.venue?.name} – {a.quantity}
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
