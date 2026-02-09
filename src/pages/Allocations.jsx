@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import {
-  getItemAvailability,
+  getItems,
   getFAs,
   getVenues,
   getAllocations,
-  createAllocation
-} from "../services/api";
+  createAllocation,
+  getItemSummary
+} from "../services/api.js";
 
 export default function Allocations() {
   const [items, setItems] = useState([]);
   const [fas, setFAs] = useState([]);
   const [venues, setVenues] = useState([]);
   const [allocations, setAllocations] = useState([]);
+  const [itemSummary, setItemSummary] = useState(null);
 
   const [form, setForm] = useState({
     item: "",
@@ -20,44 +22,39 @@ export default function Allocations() {
     quantity: ""
   });
 
-  const selectedItem = items.find(i => i._id === form.item);
-
   useEffect(() => {
     loadAll();
   }, []);
 
   const loadAll = async () => {
-    setItems(await getItemAvailability());
+    setItems(await getItems());
     setFAs(await getFAs());
     setVenues(await getVenues());
     setAllocations(await getAllocations());
   };
 
+  const onItemChange = async (itemId) => {
+    setForm({ ...form, item: itemId });
+    const summary = await getItemSummary(itemId);
+    setItemSummary(summary);
+  };
+
   const submit = async () => {
     if (
-      !form.item ||
-      !form.functionalArea ||
-      !form.venue ||
-      !form.quantity
+      itemSummary &&
+      Number(form.quantity) > itemSummary.remainingQuantity
     ) {
-      alert("All fields required");
+      alert("Not enough remaining quantity");
       return;
     }
 
-    if (form.quantity > selectedItem.available) {
-      alert("Quantity exceeds available stock");
-      return;
-    }
-
-    const res = await createAllocation(form);
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert(err.error);
-      return;
-    }
+    await createAllocation({
+      ...form,
+      quantity: Number(form.quantity)
+    });
 
     setForm({ item: "", functionalArea: "", venue: "", quantity: "" });
+    setItemSummary(null);
     loadAll();
   };
 
@@ -65,35 +62,50 @@ export default function Allocations() {
     <>
       <h2>Create Allocation</h2>
 
-      <select
-        value={form.item}
-        onChange={e => setForm({ ...form, item: e.target.value })}
-      >
+      <select onChange={e => onItemChange(e.target.value)} value={form.item}>
         <option value="">Select Item</option>
         {items.map(i => (
           <option key={i._id} value={i._id}>
-            {i.name} (available: {i.available})
+            {i.name}
+          </option>
+        ))}
+      </select>
+
+      {itemSummary && (
+        <div style={{ margin: "10px 0", padding: 10, border: "1px solid #ccc" }}>
+          <strong>Item Details</strong>
+          <div>Code: {itemSummary.code || "—"}</div>
+          <div>Total: {itemSummary.totalQuantity}</div>
+          <div>Allocated: {itemSummary.allocatedQuantity}</div>
+          <div>
+            Remaining: <b>{itemSummary.remainingQuantity}</b>
+          </div>
+        </div>
+      )}
+
+      <select
+        onChange={e =>
+          setForm({ ...form, functionalArea: e.target.value })
+        }
+        value={form.functionalArea}
+      >
+        <option value="">Select Functional Area</option>
+        {fas.map(f => (
+          <option key={f._id} value={f._id}>
+            {f.name}
           </option>
         ))}
       </select>
 
       <select
-        value={form.functionalArea}
-        onChange={e => setForm({ ...form, functionalArea: e.target.value })}
-      >
-        <option value="">Select Functional Area</option>
-        {fas.map(f => (
-          <option key={f._id} value={f._id}>{f.name}</option>
-        ))}
-      </select>
-
-      <select
-        value={form.venue}
         onChange={e => setForm({ ...form, venue: e.target.value })}
+        value={form.venue}
       >
         <option value="">Select Venue</option>
         {venues.map(v => (
-          <option key={v._id} value={v._id}>{v.name}</option>
+          <option key={v._id} value={v._id}>
+            {v.name}
+          </option>
         ))}
       </select>
 
@@ -101,25 +113,21 @@ export default function Allocations() {
         type="number"
         placeholder="Quantity"
         value={form.quantity}
-        onChange={e => setForm({ ...form, quantity: Number(e.target.value) })}
+        onChange={e =>
+          setForm({ ...form, quantity: e.target.value })
+        }
       />
-
-      {selectedItem && (
-        <p style={{ color: "#555" }}>
-          Available: {selectedItem.available} / {selectedItem.totalQuantity}
-        </p>
-      )}
 
       <button onClick={submit}>Allocate</button>
 
       <hr />
 
       <h3>Existing Allocations</h3>
-
       <ul>
         {allocations.map(a => (
           <li key={a._id}>
-            {a.item?.name} — {a.functionalArea?.name} — {a.venue?.name} — {a.quantity}
+            {a.item?.name} – {a.functionalArea?.name} –{" "}
+            {a.venue?.name} – {a.quantity}
           </li>
         ))}
       </ul>
