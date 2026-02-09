@@ -51,3 +51,5 @@ export const createVenue = async (data) =>
     body: JSON.stringify(data)
   });
 
+export const getItemAvailability = async () =>
+  (await fetch(`${API}/items/availability/all`)).json();
