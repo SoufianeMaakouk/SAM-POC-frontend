@@ -8,16 +8,23 @@ import {
   createVenue
 } from "../services/api";
 
+const API = "https://sam-poc-backend.onrender.com";
+
 export default function Admin() {
   const [items, setItems] = useState([]);
   const [fas, setFAs] = useState([]);
   const [venues, setVenues] = useState([]);
 
+  /* MANUAL INPUT STATES */
   const [itemName, setItemName] = useState("");
   const [itemQty, setItemQty] = useState("");
 
   const [faName, setFaName] = useState("");
   const [venueName, setVenueName] = useState("");
+
+  /* TEAP UPLOAD STATE */
+  const [teapFile, setTeapFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -29,9 +36,15 @@ export default function Admin() {
     setVenues(await getVenues());
   };
 
-  /* ITEMS */
+  /* =========================
+     MANUAL CREATION
+     ========================= */
+
   const addItem = async () => {
-    if (!itemName || !itemQty) return alert("Item name & quantity required");
+    if (!itemName || !itemQty) {
+      alert("Item name & quantity required");
+      return;
+    }
 
     await createItem({
       name: itemName,
@@ -43,7 +56,6 @@ export default function Admin() {
     loadAll();
   };
 
-  /* FUNCTIONAL AREAS */
   const addFA = async () => {
     if (!faName) return;
     await createFA({ name: faName });
@@ -51,7 +63,6 @@ export default function Admin() {
     loadAll();
   };
 
-  /* VENUES */
   const addVenue = async () => {
     if (!venueName) return;
     await createVenue({ name: venueName });
@@ -59,24 +70,92 @@ export default function Admin() {
     loadAll();
   };
 
+  /* =========================
+     TEAP EXCEL UPLOAD
+     ========================= */
+
+  const uploadTEAP = async () => {
+    if (!teapFile) {
+      alert("Please select a TEAP Excel file");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", teapFile);
+
+    try {
+      setUploading(true);
+
+      const res = await fetch(`${API}/admin/teap-upload`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      alert(
+        `TEAP Imported\nNew items: ${data.created}\nUpdated items: ${data.updated}`
+      );
+
+      setTeapFile(null);
+      loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div>
       <h2>Admin</h2>
 
-      {/* ITEMS */}
+      {/* =========================
+          TEAP UPLOAD
+          ========================= */}
+      <section style={{ border: "1px solid #ccc", padding: 10, marginBottom: 20 }}>
+        <h3>Upload TEAP Excel</h3>
+
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={e => setTeapFile(e.target.files[0])}
+        />
+
+        <br /><br />
+
+        <button onClick={uploadTEAP} disabled={uploading}>
+          {uploading ? "Uploading..." : "Upload TEAP"}
+        </button>
+
+        <p style={{ fontSize: 12, color: "#666" }}>
+          Expected columns: <b>Product Code</b>, <b>Product Name</b>, <b>Quantity</b>
+        </p>
+      </section>
+
+      {/* =========================
+          ITEMS (MANUAL)
+          ========================= */}
       <section>
-        <h3>Items</h3>
+        <h3>Items (Manual)</h3>
+
         <input
           placeholder="Item name"
           value={itemName}
           onChange={e => setItemName(e.target.value)}
         />
+
         <input
           type="number"
           placeholder="Total quantity"
           value={itemQty}
           onChange={e => setItemQty(e.target.value)}
         />
+
         <button onClick={addItem}>Add Item</button>
 
         <ul>
@@ -88,14 +167,18 @@ export default function Admin() {
         </ul>
       </section>
 
-      {/* FUNCTIONAL AREAS */}
+      {/* =========================
+          FUNCTIONAL AREAS
+          ========================= */}
       <section>
         <h3>Functional Areas</h3>
+
         <input
           placeholder="FA name"
           value={faName}
           onChange={e => setFaName(e.target.value)}
         />
+
         <button onClick={addFA}>Add FA</button>
 
         <ul>
@@ -105,14 +188,18 @@ export default function Admin() {
         </ul>
       </section>
 
-      {/* VENUES */}
+      {/* =========================
+          VENUES
+          ========================= */}
       <section>
         <h3>Venues</h3>
+
         <input
           placeholder="Venue name"
           value={venueName}
           onChange={e => setVenueName(e.target.value)}
         />
+
         <button onClick={addVenue}>Add Venue</button>
 
         <ul>
