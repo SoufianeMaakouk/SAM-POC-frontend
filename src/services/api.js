@@ -72,3 +72,6 @@ export const createAllocation = async (data) =>
 
 export const getDeliveries = async () =>
   (await fetch(`${API}/deliveries`)).json();
+
+export const getDeliverySheet = async () =>
+  (await fetch(`${API}/deliveries/sheet`)).json();
