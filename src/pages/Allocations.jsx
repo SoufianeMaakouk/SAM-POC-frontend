@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  getItems,
+  getItemAvailability,
   getFAs,
   getVenues,
   getAllocations,
   createAllocation
-} from "../services/api.js";
+} from "../services/api";
 
 export default function Allocations() {
   const [items, setItems] = useState([]);
@@ -20,60 +20,50 @@ export default function Allocations() {
     quantity: ""
   });
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const selectedItem = items.find(i => i._id === form.item);
 
   useEffect(() => {
     loadAll();
   }, []);
 
   const loadAll = async () => {
-    setItems(await getItems());
+    setItems(await getItemAvailability());
     setFAs(await getFAs());
     setVenues(await getVenues());
     setAllocations(await getAllocations());
   };
 
   const submit = async () => {
-    setError("");
-    setSuccess("");
-
-    if (!form.item || !form.quantity) {
-      setError("Please select an item and enter a quantity");
+    if (
+      !form.item ||
+      !form.functionalArea ||
+      !form.venue ||
+      !form.quantity
+    ) {
+      alert("All fields required");
       return;
     }
 
-    setLoading(true);
-
-    try {
-      await createAllocation({
-        ...form,
-        quantity: Number(form.quantity)
-      });
-
-      setSuccess("Allocation created successfully");
-      setForm({
-        item: "",
-        functionalArea: "",
-        venue: "",
-        quantity: ""
-      });
-
-      loadAll();
-    } catch (err) {
-      setError(err.message || "Allocation failed");
-    } finally {
-      setLoading(false);
+    if (form.quantity > selectedItem.available) {
+      alert("Quantity exceeds available stock");
+      return;
     }
+
+    const res = await createAllocation(form);
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.error);
+      return;
+    }
+
+    setForm({ item: "", functionalArea: "", venue: "", quantity: "" });
+    loadAll();
   };
 
   return (
     <>
       <h2>Create Allocation</h2>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
 
       <select
         value={form.item}
@@ -82,22 +72,18 @@ export default function Allocations() {
         <option value="">Select Item</option>
         {items.map(i => (
           <option key={i._id} value={i._id}>
-            {i.name}
+            {i.name} (available: {i.available})
           </option>
         ))}
       </select>
 
       <select
         value={form.functionalArea}
-        onChange={e =>
-          setForm({ ...form, functionalArea: e.target.value })
-        }
+        onChange={e => setForm({ ...form, functionalArea: e.target.value })}
       >
         <option value="">Select Functional Area</option>
         {fas.map(f => (
-          <option key={f._id} value={f._id}>
-            {f.name}
-          </option>
+          <option key={f._id} value={f._id}>{f.name}</option>
         ))}
       </select>
 
@@ -107,23 +93,24 @@ export default function Allocations() {
       >
         <option value="">Select Venue</option>
         {venues.map(v => (
-          <option key={v._id} value={v._id}>
-            {v.name}
-          </option>
+          <option key={v._id} value={v._id}>{v.name}</option>
         ))}
       </select>
 
       <input
         type="number"
-        min="1"
         placeholder="Quantity"
         value={form.quantity}
-        onChange={e => setForm({ ...form, quantity: e.target.value })}
+        onChange={e => setForm({ ...form, quantity: Number(e.target.value) })}
       />
 
-      <button onClick={submit} disabled={loading}>
-        {loading ? "Allocating..." : "Allocate"}
-      </button>
+      {selectedItem && (
+        <p style={{ color: "#555" }}>
+          Available: {selectedItem.available} / {selectedItem.totalQuantity}
+        </p>
+      )}
+
+      <button onClick={submit}>Allocate</button>
 
       <hr />
 
@@ -132,8 +119,7 @@ export default function Allocations() {
       <ul>
         {allocations.map(a => (
           <li key={a._id}>
-            {a.item?.name} – {a.functionalArea?.name} – {a.venue?.name} –{" "}
-            {a.quantity}
+            {a.item?.name} — {a.functionalArea?.name} — {a.venue?.name} — {a.quantity}
           </li>
         ))}
       </ul>
