@@ -1,18 +1,61 @@
 const API = "https://sam-poc-backend.onrender.com";
 
-/* ITEMS */
+/* =========================
+   ITEMS
+   ========================= */
+
+/* Basic list (used for dropdowns) */
 export const getItems = async () =>
   (await fetch(`${API}/items`)).json();
 
-/* FUNCTIONAL AREAS */
+/* All items with allocation summary */
+export const getItemsSummary = async () =>
+  (await fetch(`${API}/items/summary`)).json();
+
+/* Single item summary (remaining / allocated) */
+export const getItemSummary = async (itemId) =>
+  (await fetch(`${API}/items/${itemId}/summary`)).json();
+
+/* Create item (Admin) */
+export const createItem = async (data) =>
+  fetch(`${API}/items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+/* =========================
+   FUNCTIONAL AREAS
+   ========================= */
+
 export const getFAs = async () =>
   (await fetch(`${API}/functional-areas`)).json();
 
-/* VENUES */
+export const createFA = async (data) =>
+  fetch(`${API}/functional-areas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+/* =========================
+   VENUES
+   ========================= */
+
 export const getVenues = async () =>
   (await fetch(`${API}/venues`)).json();
 
-/* ALLOCATIONS */
+export const createVenue = async (data) =>
+  fetch(`${API}/venues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+/* =========================
+   ALLOCATIONS
+   ========================= */
+
 export const getAllocations = async () =>
   (await fetch(`${API}/allocations`)).json();
 
@@ -23,33 +66,9 @@ export const createAllocation = async (data) =>
     body: JSON.stringify(data)
   });
 
-/* DELIVERIES */
-export const getDeliveries = async () => {
-  const res = await fetch(`${API}/deliveries`);
-  return res.json();
-};
+/* =========================
+   DELIVERIES
+   ========================= */
 
-/* CREATE */
-export const createItem = async (data) =>
-  fetch(`${API}/items`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-
-export const createFA = async (data) =>
-  fetch(`${API}/functional-areas`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-
-export const createVenue = async (data) =>
-  fetch(`${API}/venues`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-
-export const getItemAvailability = async () =>
-  (await fetch(`${API}/items/availability/all`)).json();
+export const getDeliveries = async () =>
+  (await fetch(`${API}/deliveries`)).json();
