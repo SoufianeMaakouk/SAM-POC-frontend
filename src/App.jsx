@@ -12,8 +12,8 @@ export default function App() {
       <nav style={{ marginBottom: 20 }}>
         <Link to="/">Allocations</Link>{" | "}
         <Link to="/admin">Admin</Link>{" | "}
-        <Link to="/deliveries">Delivery Sheet</Link>
-        <Link to="/status">Allocation Status</Link>
+        <Link to="/deliveries">Delivery Sheet</Link>{" | "}
+        <Link to="/status">Allocation Status</Link>{" | "}
       </nav>
 
       <Routes>
