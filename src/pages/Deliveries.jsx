@@ -2,38 +2,53 @@ import { useEffect, useState } from "react";
 import { getDeliverySheet } from "../services/api";
 
 export default function Deliveries() {
-  const [sheet, setSheet] = useState({});
+  const [rows, setRows] = useState([]);
 
   useEffect(() => {
-    getDeliverySheet().then(setSheet);
+    load();
   }, []);
+
+  const load = async () => {
+    const data = await getDeliverySheet();
+    setRows(data);
+  };
 
   return (
     <div>
       <h2>Delivery Sheet</h2>
 
-      {Object.entries(sheet).map(([venue, subVenues]) => (
-        <div key={venue}>
-          <h3>{venue}</h3>
+      {rows.length === 0 && <p>No deliveries yet</p>}
 
-          {Object.entries(subVenues).map(([sv, spaces]) => (
-            <div key={sv} style={{ marginLeft: 20 }}>
-              <h4>{sv}</h4>
-
-              {Object.entries(spaces).map(([space, items]) => (
-                <div key={space} style={{ marginLeft: 40 }}>
-                  <strong>{space}</strong>
-                  <ul>
-                    {items.map((i, idx) => (
-                      <li key={idx}>{i.item} — {i.quantity}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+      <table border="1" cellPadding="6" style={{ width: "100%" }}>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r._id}>
+              <td>{r.item?.name}</td>
+              <td>{r.quantity}</td>
+              <td>
+                {r.space?.name ||
+                  r.subVenue?.name ||
+                  r.venue?.name}
+              </td>
+              <td>
+                <strong>{r.status}</strong>
+              </td>
+              <td>
+                {new Date(r.updatedAt).toLocaleDateString()}
+              </td>
+            </tr>
           ))}
-        </div>
-      ))}
+        </tbody>
+      </table>
     </div>
   );
 }
