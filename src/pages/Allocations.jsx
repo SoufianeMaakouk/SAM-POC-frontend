@@ -192,14 +192,34 @@ export default function Allocations() {
       <hr />
 
       <h3>Existing Allocations</h3>
-      <ul>
-        {allocations.map(a => (
-          <li key={a._id}>
-            {a.item?.name} → {a.space?.name || a.subVenue?.name || a.venue?.name} —{" "}
-            {a.quantity}
-          </li>
-        ))}
-      </ul>
+
+<ul>
+  {allocations.map(a => (
+    <li key={a._id} style={{ marginBottom: 8 }}>
+      <strong>{a.item?.name}</strong> →
+      {" "}
+      {a.space?.name || a.subVenue?.name || a.venue?.name}
+      {" "}
+      — Qty: {a.quantity}
+      {" "}
+      — Status:
+      {" "}
+      <select
+        value={a.status}
+        onChange={async e => {
+          await updateAllocationStatus(a._id, e.target.value);
+          loadBase();
+        }}
+      >
+        <option value="ORDERED">Ordered</option>
+        <option value="FULFILLED">Fulfilled</option>
+        <option value="DELIVERED">Delivered</option>
+        <option value="RETURNED">Returned</option>
+        <option value="MISSING">Missing</option>
+      </select>
+    </li>
+  ))}
+</ul>
     </div>
   );
 }
