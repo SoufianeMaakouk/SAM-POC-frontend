@@ -53,14 +53,14 @@ export const createVenue = async (data) =>
   });
 
 /* =========================
-   SUB-VENUES (future-proof)
+   SUB-VENUES
    ========================= */
 
 export const getSubVenues = async (venueId) =>
   (await fetch(`${API}/sub-venues/${venueId}`)).json();
 
 /* =========================
-   SPACES (future-proof)
+   SPACES
    ========================= */
 
 export const getSpaces = async (subVenueId) =>
@@ -80,21 +80,7 @@ export const createAllocation = async (data) =>
     body: JSON.stringify(data)
   });
 
-/* =========================
-   DELIVERIES
-   ========================= */
-
-export const getDeliveries = async () =>
-  (await fetch(`${API}/deliveries`)).json();
-
-export const getDeliverySheet = async () =>
-  (await fetch(`${API}/deliveries/sheet`)).json();
-
-
-/* =========================
-   ALLOCATION STATUS
-   ========================= */
-
+/* Update allocation status */
 export const updateAllocationStatus = async (id, status) =>
   fetch(`${API}/allocations/${id}/status`, {
     method: "PATCH",
@@ -102,4 +88,10 @@ export const updateAllocationStatus = async (id, status) =>
     body: JSON.stringify({ status })
   });
 
+/* =========================
+   DELIVERY SHEET
+   ========================= */
 
+/* READ-ONLY delivery sheet (fulfilled + delivered) */
+export const getDeliverySheet = async () =>
+  (await fetch(`${API}/deliveries/sheet`)).json();
