@@ -20,6 +20,7 @@ export default function Allocations() {
   const [allocations, setAllocations] = useState([]);
   const [itemDetails, setItemDetails] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     item: "",
@@ -69,7 +70,8 @@ export default function Allocations() {
       return;
     }
 
-    setSubVenues(await getSubVenues(venueId));
+    const data = await getSubVenues(venueId);
+    setSubVenues(data);
     setSpaces([]);
   };
 
@@ -86,23 +88,40 @@ export default function Allocations() {
       return;
     }
 
-    setSpaces(await getSpaces(subVenueId));
+    const data = await getSpaces(subVenueId);
+    setSpaces(data);
   };
 
   /* SUBMIT */
   const submit = async () => {
     try {
       setError("");
+      setLoading(true);
 
-      if (!form.item || !form.functionalArea || !form.venue || !form.quantity) {
-        return setError("Please fill all required fields");
+      // Required fields validation
+      if (!form.item || !form.functionalArea || !form.venue) {
+        setLoading(false);
+        return setError("Item, Functional Area and Venue are required");
       }
 
-      await createAllocation({
-        ...form,
-        quantity: Number(form.quantity)
-      });
+      if (!form.quantity || Number(form.quantity) <= 0) {
+        setLoading(false);
+        return setError("Quantity must be greater than 0");
+      }
 
+      // 🔥 CRITICAL FIX: Never send empty strings as ObjectId
+      const payload = {
+        item: form.item,
+        functionalArea: form.functionalArea,
+        venue: form.venue,
+        quantity: Number(form.quantity),
+        subVenue: form.subVenue || undefined,
+        space: form.space || undefined
+      };
+
+      await createAllocation(payload);
+
+      // Reset form
       setForm({
         item: "",
         functionalArea: "",
@@ -113,9 +132,14 @@ export default function Allocations() {
       });
 
       setItemDetails(null);
-      loadBase();
+      setSubVenues([]);
+      setSpaces([]);
+
+      await loadBase();
     } catch (e) {
       setError(e.message || "Allocation failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -192,7 +216,7 @@ export default function Allocations() {
         onChange={e => selectSubVenue(e.target.value)}
         disabled={!subVenues.length}
       >
-        <option value="">SubVenue</option>
+        <option value="">SubVenue (Optional)</option>
         {subVenues.map(s => (
           <option key={s._id} value={s._id}>
             {s.name}
@@ -208,7 +232,7 @@ export default function Allocations() {
         }
         disabled={!spaces.length}
       >
-        <option value="">Space</option>
+        <option value="">Space (Optional)</option>
         {spaces.map(s => (
           <option key={s._id} value={s._id}>
             {s.name}
@@ -226,7 +250,9 @@ export default function Allocations() {
         }
       />
 
-      <button onClick={submit}>Allocate</button>
+      <button onClick={submit} disabled={loading}>
+        {loading ? "Allocating..." : "Allocate"}
+      </button>
 
       <hr style={{ margin: "30px 0" }} />
 
