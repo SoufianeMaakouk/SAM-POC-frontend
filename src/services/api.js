@@ -73,12 +73,21 @@ export const getSpaces = async (subVenueId) =>
 export const getAllocations = async () =>
   (await fetch(`${API}/allocations`)).json();
 
-export const createAllocation = async (data) =>
-  fetch(`${API}/allocations`, {
+export const createAllocation = async (data) => {
+  const res = await fetch(`${API}/allocations`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.error || "Allocation failed");
+  }
+
+  return json;
+};
 
 /* Update allocation status */
 export const updateAllocationStatus = async (id, status) =>
