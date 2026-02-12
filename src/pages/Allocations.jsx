@@ -32,7 +32,8 @@ export default function Allocations() {
     venue: "",
     subVenue: "",
     space: "",
-    quantity: ""
+    quantity: "",
+    deliveryDay: "Day 1"
   });
 
   useEffect(() => {
@@ -110,7 +111,8 @@ export default function Allocations() {
         venue: "",
         subVenue: "",
         space: "",
-        quantity: ""
+        quantity: "",
+        deliveryDay: "Day 1"
       });
 
       setItemDetails(null);
@@ -176,8 +178,7 @@ export default function Allocations() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* FORM SECTION (unchanged) */}
-      {/* Item Select */}
+      {/* Item */}
       <select value={form.item} onChange={e => selectItem(e.target.value)}>
         <option value="">Select Item</option>
         {items.map(i => (
@@ -197,6 +198,7 @@ export default function Allocations() {
         </div>
       )}
 
+      {/* Functional Area */}
       <select
         value={form.functionalArea}
         onChange={e => setForm(prev => ({ ...prev, functionalArea: e.target.value }))}
@@ -207,6 +209,7 @@ export default function Allocations() {
         ))}
       </select>
 
+      {/* Venue */}
       <select value={form.venue} onChange={e => selectVenue(e.target.value)}>
         <option value="">Venue</option>
         {venues.map(v => (
@@ -214,6 +217,7 @@ export default function Allocations() {
         ))}
       </select>
 
+      {/* SubVenue */}
       <select
         value={form.subVenue}
         onChange={e => selectSubVenue(e.target.value)}
@@ -225,6 +229,7 @@ export default function Allocations() {
         ))}
       </select>
 
+      {/* Space */}
       <select
         value={form.space}
         onChange={e => setForm(prev => ({ ...prev, space: e.target.value }))}
@@ -236,6 +241,17 @@ export default function Allocations() {
         ))}
       </select>
 
+      {/* Delivery Day */}
+      <select
+        value={form.deliveryDay}
+        onChange={e => setForm(prev => ({ ...prev, deliveryDay: e.target.value }))}
+      >
+        <option value="Day 1">Day 1</option>
+        <option value="Day 2">Day 2</option>
+        <option value="Day 3">Day 3</option>
+      </select>
+
+      {/* Quantity */}
       <input
         type="number"
         placeholder="Quantity"
@@ -253,7 +269,10 @@ export default function Allocations() {
         {allocations.map(a => (
           <li key={a._id} style={{ padding: 12, marginBottom: 10, border: "1px solid #ddd", borderRadius: 6 }}>
             <strong>{a.item?.name}</strong>
-            <div>Location: {a.space?.name || a.subVenue?.name || a.venue?.name || "—"}</div>
+            <div>
+              Location: {a.space?.name || a.subVenue?.name || a.venue?.name || "—"}
+            </div>
+            <div>Delivery Day: {a.deliveryDay}</div>
 
             <div>
               Quantity:{" "}
