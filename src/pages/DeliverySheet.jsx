@@ -28,15 +28,12 @@ export default function DeliverySheet() {
       return;
     }
 
-    try {
-      const res = await fetch(
-        `${API}/allocations/venue/${selectedVenue}?day=${selectedDay}`
-      );
-      const data = await res.json();
-      setAllocations(data);
-    } catch (err) {
-      console.error("Failed loading allocations", err);
-    }
+    const res = await fetch(
+      `${API}/allocations/venue/${selectedVenue}?day=${selectedDay}`
+    );
+
+    const data = await res.json();
+    setAllocations(data);
   };
 
   const grouped = allocations.reduce((acc, alloc) => {
@@ -46,7 +43,7 @@ export default function DeliverySheet() {
     return acc;
   }, {});
 
-  const grandTotal = Object.values(grouped).reduce((a, b) => a + b, 0);
+  const total = Object.values(grouped).reduce((a, b) => a + b, 0);
 
   return (
     <div style={{ padding: 30 }}>
@@ -61,37 +58,55 @@ export default function DeliverySheet() {
         </select>
 
         <select value={selectedDay} onChange={e => setSelectedDay(e.target.value)}>
-          <option value="Day 1">Day 1</option>
-          <option value="Day 2">Day 2</option>
-          <option value="Day 3">Day 3</option>
+          <option>Day 1</option>
+          <option>Day 2</option>
+          <option>Day 3</option>
         </select>
+
+        <button
+          onClick={() =>
+            window.open(
+              `${API}/allocations/export/excel/${selectedVenue}?day=${selectedDay}`
+            )
+          }
+        >
+          Export Excel
+        </button>
+
+        <button
+          onClick={() =>
+            window.open(
+              `${API}/allocations/export/pdf/${selectedVenue}?day=${selectedDay}`
+            )
+          }
+        >
+          Export PDF
+        </button>
       </div>
 
-      {selectedVenue && (
-        Object.keys(grouped).length > 0 ? (
-          <table border="1" cellPadding="10" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Total Quantity</th>
+      {Object.keys(grouped).length > 0 ? (
+        <table border="1" cellPadding="10" style={{ width: "100%" }}>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Total Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(grouped).map(([item, qty]) => (
+              <tr key={item}>
+                <td>{item}</td>
+                <td>{qty}</td>
               </tr>
-            </thead>
-            <tbody>
-              {Object.entries(grouped).map(([item, qty]) => (
-                <tr key={item}>
-                  <td>{item}</td>
-                  <td>{qty}</td>
-                </tr>
-              ))}
-              <tr>
-                <td><strong>GRAND TOTAL</strong></td>
-                <td><strong>{grandTotal}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        ) : (
-          <p>No allocations found for this selection.</p>
-        )
+            ))}
+            <tr>
+              <td><strong>GRAND TOTAL</strong></td>
+              <td><strong>{total}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      ) : (
+        <p>No allocations found.</p>
       )}
     </div>
   );
