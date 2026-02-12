@@ -1,107 +1,131 @@
-import { useEffect, useState } from "react";
-import { getVenues } from "../services/api";
-
-const API = import.meta.env.VITE_API_URL;
+import React, { useEffect, useState } from "react";
 
 export default function DeliverySheet() {
-  const [venues, setVenues] = useState([]);
-  const [selectedVenue, setSelectedVenue] = useState("");
-  const [selectedDay, setSelectedDay] = useState("Day 1");
   const [allocations, setAllocations] = useState([]);
+  const [selectedVenue, setSelectedVenue] = useState("All");
+  const [selectedDay, setSelectedDay] = useState("All");
 
+  // 🔹 TEMP MOCK DATA (replace later with backend API)
   useEffect(() => {
-    loadVenues();
+    const mockData = [
+      { venue: "Stadium A", item: "Water Bottles", quantity: 200, day: "Day 1" },
+      { venue: "Stadium A", item: "T-Shirts", quantity: 50, day: "Day 2" },
+      { venue: "Arena B", item: "Water Bottles", quantity: 150, day: "Day 1" },
+      { venue: "Arena B", item: "Caps", quantity: 40, day: "Day 2" },
+      { venue: "Hall C", item: "Flags", quantity: 30, day: "Day 1" },
+    ];
+
+    setAllocations(mockData);
   }, []);
 
-  const loadVenues = async () => {
-    const data = await getVenues();
-    setVenues(data);
-  };
+  // 🔹 Filter logic
+  const filteredAllocations = allocations.filter((alloc) => {
+    const venueMatch =
+      selectedVenue === "All" || alloc.venue === selectedVenue;
 
-  const loadAllocations = async (venueId, day) => {
-    if (!venueId) {
-      setAllocations([]);
-      return;
+    const dayMatch =
+      selectedDay === "All" || alloc.day === selectedDay;
+
+    return venueMatch && dayMatch;
+  });
+
+  // 🔹 Get unique venues
+  const venues = ["All", ...new Set(allocations.map((a) => a.venue))];
+
+  // 🔹 Group by venue
+  const groupedByVenue = filteredAllocations.reduce((acc, curr) => {
+    if (!acc[curr.venue]) {
+      acc[curr.venue] = [];
     }
-
-    const res = await fetch(
-      `${API}/allocations/venue/${venueId}?day=${day}`
-    );
-    const data = await res.json();
-    setAllocations(data);
-  };
-
-  const grouped = allocations.reduce((acc, a) => {
-    const key = a.item?.name || "Unknown";
-    if (!acc[key]) acc[key] = 0;
-    acc[key] += a.quantity;
+    acc[curr.venue].push(curr);
     return acc;
   }, {});
 
-  const grandTotal = Object.values(grouped).reduce(
-    (sum, val) => sum + val,
-    0
-  );
-
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Delivery Sheet</h2>
+    <div style={{ padding: "30px" }}>
+      <h1>📦 Per Venue Delivery Sheets</h1>
 
-      <select
-        value={selectedVenue}
-        onChange={e => {
-          setSelectedVenue(e.target.value);
-          loadAllocations(e.target.value, selectedDay);
-        }}
-      >
-        <option value="">Select Venue</option>
-        {venues.map(v => (
-          <option key={v._id} value={v._id}>{v.name}</option>
-        ))}
-      </select>
+      {/* ================= FILTERS ================= */}
+      <div style={{ marginBottom: "20px", display: "flex", gap: "20px" }}>
+        {/* Venue Filter */}
+        <div>
+          <label>Venue: </label>
+          <select
+            value={selectedVenue}
+            onChange={(e) => setSelectedVenue(e.target.value)}
+          >
+            {venues.map((venue) => (
+              <option key={venue} value={venue}>
+                {venue}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <select
-        value={selectedDay}
-        onChange={e => {
-          setSelectedDay(e.target.value);
-          loadAllocations(selectedVenue, e.target.value);
-        }}
-      >
-        <option value="Day 1">Day 1</option>
-        <option value="Day 2">Day 2</option>
-        <option value="Day 3">Day 3</option>
-      </select>
+        {/* Day Filter */}
+        <div>
+          <label>Delivery Day: </label>
+          <select
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(e.target.value)}
+          >
+            <option value="All">All</option>
+            <option value="Day 1">Day 1</option>
+            <option value="Day 2">Day 2</option>
+          </select>
+        </div>
+      </div>
 
-      <hr style={{ margin: "20px 0" }} />
+      {/* ================= DELIVERY TABLE ================= */}
+      {Object.keys(groupedByVenue).length === 0 && (
+        <p>No allocations found.</p>
+      )}
 
-      {Object.keys(grouped).length > 0 && (
-        <>
-          <table border="1" cellPadding="8" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Total Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(grouped).map(([item, qty]) => (
-                <tr key={item}>
-                  <td>{item}</td>
-                  <td>{qty}</td>
+      {Object.entries(groupedByVenue).map(([venue, items]) => {
+        const total = items.reduce((sum, i) => sum + i.quantity, 0);
+
+        return (
+          <div
+            key={venue}
+            style={{
+              marginBottom: "40px",
+              border: "1px solid #ddd",
+              padding: "15px",
+              borderRadius: "8px",
+            }}
+          >
+            <h2>🏟 {venue}</h2>
+
+            <table
+              width="100%"
+              border="1"
+              cellPadding="8"
+              style={{ borderCollapse: "collapse", marginTop: "10px" }}
+            >
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Quantity</th>
+                  <th>Day</th>
                 </tr>
-              ))}
-              <tr>
-                <td><strong>GRAND TOTAL</strong></td>
-                <td><strong>{grandTotal}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        </>
-      )}
+              </thead>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.item}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.day}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-      {selectedVenue && Object.keys(grouped).length === 0 && (
-        <p>No allocations for this selection.</p>
-      )}
+            <h3 style={{ marginTop: "15px" }}>
+              Total for {venue}: {total} units
+            </h3>
+          </div>
+        );
+      })}
     </div>
   );
 }
