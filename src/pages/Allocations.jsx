@@ -37,17 +37,38 @@ export default function Allocations() {
   });
 
   useEffect(() => {
-    loadBase();
+    loadAll();
   }, []);
 
-  const loadBase = async () => {
-    setItems(await getItems());
-    setFAs(await getFAs());
-    setVenues(await getVenues());
-    setAllocations(await getAllocations());
+  const loadAll = async () => {
+    try {
+      const [
+        itemsData,
+        fasData,
+        venuesData,
+        allocationsData
+      ] = await Promise.all([
+        getItems(),
+        getFAs(),
+        getVenues(),
+        getAllocations()
+      ]);
+
+      setItems(itemsData);
+      setFAs(fasData);
+      setVenues(venuesData);
+      setAllocations(allocationsData);
+    } catch (err) {
+      setError("Failed loading data");
+    }
   };
 
-  const selectItem = async itemId => {
+  const refreshAllocations = async () => {
+    const data = await getAllocations();
+    setAllocations(data);
+  };
+
+  const selectItem = async (itemId) => {
     setForm(prev => ({ ...prev, item: itemId }));
 
     if (!itemId) {
@@ -59,7 +80,7 @@ export default function Allocations() {
     setItemDetails(summary);
   };
 
-  const selectVenue = async venueId => {
+  const selectVenue = async (venueId) => {
     setForm(prev => ({
       ...prev,
       venue: venueId,
@@ -73,11 +94,12 @@ export default function Allocations() {
       return;
     }
 
-    setSubVenues(await getSubVenues(venueId));
+    const subs = await getSubVenues(venueId);
+    setSubVenues(subs);
     setSpaces([]);
   };
 
-  const selectSubVenue = async subVenueId => {
+  const selectSubVenue = async (subVenueId) => {
     setForm(prev => ({
       ...prev,
       subVenue: subVenueId,
@@ -89,7 +111,8 @@ export default function Allocations() {
       return;
     }
 
-    setSpaces(await getSpaces(subVenueId));
+    const sp = await getSpaces(subVenueId);
+    setSpaces(sp);
   };
 
   const submit = async () => {
@@ -116,52 +139,36 @@ export default function Allocations() {
       });
 
       setItemDetails(null);
-      loadBase();
+      refreshAllocations();
 
     } catch (e) {
       setError(e.message || "Allocation failed");
     }
   };
 
-  const updateQuantity = async id => {
+  const updateQuantity = async (id) => {
     try {
-      setError("");
-
       const res = await fetch(`${API}/allocations/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: Number(editQuantity) })
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Update failed");
-      }
+      if (!res.ok) throw new Error("Update failed");
 
       setEditingId(null);
       setEditQuantity("");
-      loadBase();
-
+      refreshAllocations();
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const deleteAllocation = async id => {
-    if (!window.confirm("Are you sure you want to delete this allocation?")) {
-      return;
-    }
+  const deleteAllocation = async (id) => {
+    if (!window.confirm("Delete allocation?")) return;
 
-    try {
-      await fetch(`${API}/allocations/${id}`, {
-        method: "DELETE"
-      });
-
-      loadBase();
-    } catch (err) {
-      setError("Delete failed");
-    }
+    await fetch(`${API}/allocations/${id}`, { method: "DELETE" });
+    refreshAllocations();
   };
 
   const STATUS_OPTIONS = [
@@ -178,27 +185,21 @@ export default function Allocations() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* Item */}
       <select value={form.item} onChange={e => selectItem(e.target.value)}>
         <option value="">Select Item</option>
         {items.map(i => (
-          <option key={i._id} value={i._id}>
-            {i.name}
-          </option>
+          <option key={i._id} value={i._id}>{i.name}</option>
         ))}
       </select>
 
       {itemDetails && (
-        <div style={{ margin: "12px 0", padding: 12, border: "1px solid #ccc", borderRadius: 6 }}>
-          <strong>Item details</strong>
-          <div>Code: {itemDetails.code || "—"}</div>
-          <div>Total quantity: {itemDetails.totalQuantity}</div>
+        <div style={{ margin: 12, padding: 12, border: "1px solid #ccc" }}>
+          <div>Total: {itemDetails.totalQuantity}</div>
           <div>Allocated: {itemDetails.allocated}</div>
           <div>Remaining: {itemDetails.remaining}</div>
         </div>
       )}
 
-      {/* Functional Area */}
       <select
         value={form.functionalArea}
         onChange={e => setForm(prev => ({ ...prev, functionalArea: e.target.value }))}
@@ -209,7 +210,6 @@ export default function Allocations() {
         ))}
       </select>
 
-      {/* Venue */}
       <select value={form.venue} onChange={e => selectVenue(e.target.value)}>
         <option value="">Venue</option>
         {venues.map(v => (
@@ -217,7 +217,6 @@ export default function Allocations() {
         ))}
       </select>
 
-      {/* SubVenue */}
       <select
         value={form.subVenue}
         onChange={e => selectSubVenue(e.target.value)}
@@ -229,7 +228,6 @@ export default function Allocations() {
         ))}
       </select>
 
-      {/* Space */}
       <select
         value={form.space}
         onChange={e => setForm(prev => ({ ...prev, space: e.target.value }))}
@@ -241,7 +239,6 @@ export default function Allocations() {
         ))}
       </select>
 
-      {/* Delivery Day */}
       <select
         value={form.deliveryDay}
         onChange={e => setForm(prev => ({ ...prev, deliveryDay: e.target.value }))}
@@ -251,7 +248,6 @@ export default function Allocations() {
         <option value="Day 3">Day 3</option>
       </select>
 
-      {/* Quantity */}
       <input
         type="number"
         placeholder="Quantity"
@@ -261,72 +257,57 @@ export default function Allocations() {
 
       <button onClick={submit}>Allocate</button>
 
-      <hr style={{ margin: "30px 0" }} />
+      <hr />
 
       <h3>Existing Allocations</h3>
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {allocations.map(a => (
-          <li key={a._id} style={{ padding: 12, marginBottom: 10, border: "1px solid #ddd", borderRadius: 6 }}>
-            <strong>{a.item?.name}</strong>
-            <div>
-              Location: {a.space?.name || a.subVenue?.name || a.venue?.name || "—"}
-            </div>
-            <div>Delivery Day: {a.deliveryDay}</div>
+      {allocations.map(a => (
+        <div key={a._id} style={{ border: "1px solid #ddd", padding: 10, marginBottom: 10 }}>
+          <strong>{a.item?.name}</strong>
+          <div>Venue: {a.venue?.name}</div>
+          <div>Delivery: {a.deliveryDay}</div>
 
-            <div>
-              Quantity:{" "}
-              {editingId === a._id ? (
-                <>
-                  <input
-                    type="number"
-                    value={editQuantity}
-                    onChange={e => setEditQuantity(e.target.value)}
-                    style={{ width: 60 }}
-                  />
-                  <button onClick={() => updateQuantity(a._id)}>Save</button>
-                  <button onClick={() => setEditingId(null)}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  {a.quantity}
-                  <button
-                    style={{ marginLeft: 10 }}
-                    onClick={() => {
-                      setEditingId(a._id);
-                      setEditQuantity(a.quantity);
-                    }}
-                  >
-                    Edit
-                  </button>
-                </>
-              )}
-            </div>
+          <div>
+            Qty:
+            {editingId === a._id ? (
+              <>
+                <input
+                  type="number"
+                  value={editQuantity}
+                  onChange={e => setEditQuantity(e.target.value)}
+                />
+                <button onClick={() => updateQuantity(a._id)}>Save</button>
+              </>
+            ) : (
+              <>
+                {a.quantity}
+                <button onClick={() => {
+                  setEditingId(a._id);
+                  setEditQuantity(a.quantity);
+                }}>
+                  Edit
+                </button>
+              </>
+            )}
+          </div>
 
-            <div style={{ marginTop: 6 }}>
-              Status:{" "}
-              <select
-                value={a.status || "ORDERED"}
-                onChange={async e => {
-                  await updateAllocationStatus(a._id, e.target.value);
-                  loadBase();
-                }}
-              >
-                {STATUS_OPTIONS.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+          <select
+            value={a.status || "ORDERED"}
+            onChange={async e => {
+              await updateAllocationStatus(a._id, e.target.value);
+              refreshAllocations();
+            }}
+          >
+            {STATUS_OPTIONS.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
 
-            <button
-              style={{ marginTop: 8, background: "red", color: "white" }}
-              onClick={() => deleteAllocation(a._id)}
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+          <button onClick={() => deleteAllocation(a._id)} style={{ background: "red", color: "white" }}>
+            Delete
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
