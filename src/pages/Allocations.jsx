@@ -11,6 +11,8 @@ import {
   updateAllocationStatus
 } from "../services/api";
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function Allocations() {
   const [items, setItems] = useState([]);
   const [fas, setFAs] = useState([]);
@@ -20,7 +22,9 @@ export default function Allocations() {
   const [allocations, setAllocations] = useState([]);
   const [itemDetails, setItemDetails] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const [editingId, setEditingId] = useState(null);
+  const [editQuantity, setEditQuantity] = useState("");
 
   const [form, setForm] = useState({
     item: "",
@@ -42,7 +46,6 @@ export default function Allocations() {
     setAllocations(await getAllocations());
   };
 
-  /* ITEM SELECT */
   const selectItem = async itemId => {
     setForm(prev => ({ ...prev, item: itemId }));
 
@@ -55,7 +58,6 @@ export default function Allocations() {
     setItemDetails(summary);
   };
 
-  /* VENUE SELECT */
   const selectVenue = async venueId => {
     setForm(prev => ({
       ...prev,
@@ -70,12 +72,10 @@ export default function Allocations() {
       return;
     }
 
-    const data = await getSubVenues(venueId);
-    setSubVenues(data);
+    setSubVenues(await getSubVenues(venueId));
     setSpaces([]);
   };
 
-  /* SUBVENUE SELECT */
   const selectSubVenue = async subVenueId => {
     setForm(prev => ({
       ...prev,
@@ -88,40 +88,22 @@ export default function Allocations() {
       return;
     }
 
-    const data = await getSpaces(subVenueId);
-    setSpaces(data);
+    setSpaces(await getSpaces(subVenueId));
   };
 
-  /* SUBMIT */
   const submit = async () => {
     try {
       setError("");
-      setLoading(true);
 
-      // Required fields validation
-      if (!form.item || !form.functionalArea || !form.venue) {
-        setLoading(false);
-        return setError("Item, Functional Area and Venue are required");
+      if (!form.item || !form.functionalArea || !form.venue || !form.quantity) {
+        return setError("Please fill all required fields");
       }
 
-      if (!form.quantity || Number(form.quantity) <= 0) {
-        setLoading(false);
-        return setError("Quantity must be greater than 0");
-      }
+      await createAllocation({
+        ...form,
+        quantity: Number(form.quantity)
+      });
 
-      // 🔥 CRITICAL FIX: Never send empty strings as ObjectId
-      const payload = {
-        item: form.item,
-        functionalArea: form.functionalArea,
-        venue: form.venue,
-        quantity: Number(form.quantity),
-        subVenue: form.subVenue || undefined,
-        space: form.space || undefined
-      };
-
-      await createAllocation(payload);
-
-      // Reset form
       setForm({
         item: "",
         functionalArea: "",
@@ -132,14 +114,51 @@ export default function Allocations() {
       });
 
       setItemDetails(null);
-      setSubVenues([]);
-      setSpaces([]);
+      loadBase();
 
-      await loadBase();
     } catch (e) {
       setError(e.message || "Allocation failed");
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const updateQuantity = async id => {
+    try {
+      setError("");
+
+      const res = await fetch(`${API}/allocations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity: Number(editQuantity) })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Update failed");
+      }
+
+      setEditingId(null);
+      setEditQuantity("");
+      loadBase();
+
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const deleteAllocation = async id => {
+    if (!window.confirm("Are you sure you want to delete this allocation?")) {
+      return;
+    }
+
+    try {
+      await fetch(`${API}/allocations/${id}`, {
+        method: "DELETE"
+      });
+
+      loadBase();
+    } catch (err) {
+      setError("Delete failed");
     }
   };
 
@@ -157,7 +176,8 @@ export default function Allocations() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* ITEM */}
+      {/* FORM SECTION (unchanged) */}
+      {/* Item Select */}
       <select value={form.item} onChange={e => selectItem(e.target.value)}>
         <option value="">Select Item</option>
         {items.map(i => (
@@ -167,16 +187,8 @@ export default function Allocations() {
         ))}
       </select>
 
-      {/* ITEM DETAILS */}
       {itemDetails && (
-        <div
-          style={{
-            margin: "12px 0",
-            padding: 12,
-            border: "1px solid #ccc",
-            borderRadius: 6
-          }}
-        >
+        <div style={{ margin: "12px 0", padding: 12, border: "1px solid #ccc", borderRadius: 6 }}>
           <strong>Item details</strong>
           <div>Code: {itemDetails.code || "—"}</div>
           <div>Total quantity: {itemDetails.totalQuantity}</div>
@@ -185,74 +197,53 @@ export default function Allocations() {
         </div>
       )}
 
-      {/* FUNCTIONAL AREA */}
       <select
         value={form.functionalArea}
-        onChange={e =>
-          setForm(prev => ({ ...prev, functionalArea: e.target.value }))
-        }
+        onChange={e => setForm(prev => ({ ...prev, functionalArea: e.target.value }))}
       >
         <option value="">Functional Area</option>
         {fas.map(f => (
-          <option key={f._id} value={f._id}>
-            {f.name}
-          </option>
+          <option key={f._id} value={f._id}>{f.name}</option>
         ))}
       </select>
 
-      {/* VENUE */}
       <select value={form.venue} onChange={e => selectVenue(e.target.value)}>
         <option value="">Venue</option>
         {venues.map(v => (
-          <option key={v._id} value={v._id}>
-            {v.name}
-          </option>
+          <option key={v._id} value={v._id}>{v.name}</option>
         ))}
       </select>
 
-      {/* SUB VENUE */}
       <select
         value={form.subVenue}
         onChange={e => selectSubVenue(e.target.value)}
         disabled={!subVenues.length}
       >
-        <option value="">SubVenue (Optional)</option>
+        <option value="">SubVenue</option>
         {subVenues.map(s => (
-          <option key={s._id} value={s._id}>
-            {s.name}
-          </option>
+          <option key={s._id} value={s._id}>{s.name}</option>
         ))}
       </select>
 
-      {/* SPACE */}
       <select
         value={form.space}
-        onChange={e =>
-          setForm(prev => ({ ...prev, space: e.target.value }))
-        }
+        onChange={e => setForm(prev => ({ ...prev, space: e.target.value }))}
         disabled={!spaces.length}
       >
-        <option value="">Space (Optional)</option>
+        <option value="">Space</option>
         {spaces.map(s => (
-          <option key={s._id} value={s._id}>
-            {s.name}
-          </option>
+          <option key={s._id} value={s._id}>{s.name}</option>
         ))}
       </select>
 
-      {/* QUANTITY */}
       <input
         type="number"
         placeholder="Quantity"
         value={form.quantity}
-        onChange={e =>
-          setForm(prev => ({ ...prev, quantity: e.target.value }))
-        }
+        onChange={e => setForm(prev => ({ ...prev, quantity: e.target.value }))}
       />
 
-      <button onClick={submit} disabled={loading}>
-        {loading ? "Allocating..." : "Allocate"}
-      </button>
+      <button onClick={submit}>Allocate</button>
 
       <hr style={{ margin: "30px 0" }} />
 
@@ -260,28 +251,38 @@ export default function Allocations() {
 
       <ul style={{ listStyle: "none", padding: 0 }}>
         {allocations.map(a => (
-          <li
-            key={a._id}
-            style={{
-              padding: 12,
-              marginBottom: 10,
-              border: "1px solid #ddd",
-              borderRadius: 6
-            }}
-          >
+          <li key={a._id} style={{ padding: 12, marginBottom: 10, border: "1px solid #ddd", borderRadius: 6 }}>
+            <strong>{a.item?.name}</strong>
+            <div>Location: {a.space?.name || a.subVenue?.name || a.venue?.name || "—"}</div>
+
             <div>
-              <strong>{a.item?.name}</strong>
+              Quantity:{" "}
+              {editingId === a._id ? (
+                <>
+                  <input
+                    type="number"
+                    value={editQuantity}
+                    onChange={e => setEditQuantity(e.target.value)}
+                    style={{ width: 60 }}
+                  />
+                  <button onClick={() => updateQuantity(a._id)}>Save</button>
+                  <button onClick={() => setEditingId(null)}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  {a.quantity}
+                  <button
+                    style={{ marginLeft: 10 }}
+                    onClick={() => {
+                      setEditingId(a._id);
+                      setEditQuantity(a.quantity);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </>
+              )}
             </div>
-
-            <div style={{ fontSize: 14, opacity: 0.8 }}>
-              Location:{" "}
-              {a.space?.name ||
-                a.subVenue?.name ||
-                a.venue?.name ||
-                "—"}
-            </div>
-
-            <div>Quantity: {a.quantity}</div>
 
             <div style={{ marginTop: 6 }}>
               Status:{" "}
@@ -293,12 +294,17 @@ export default function Allocations() {
                 }}
               >
                 {STATUS_OPTIONS.map(s => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>
+
+            <button
+              style={{ marginTop: 8, background: "red", color: "white" }}
+              onClick={() => deleteAllocation(a._id)}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
