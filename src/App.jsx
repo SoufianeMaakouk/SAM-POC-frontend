@@ -4,8 +4,6 @@ import Admin from "./pages/Admin.jsx";
 import Allocations from "./pages/Allocations.jsx";
 import AllocationStatus from "./pages/AllocationStatus.jsx";
 import DeliverySheet from "./pages/DeliverySheet.jsx";
-import DeliveryDashboard from "./pages/DeliveryDashboard";
-
 
 export default function App() {
   return (
@@ -14,8 +12,7 @@ export default function App() {
         <Link to="/">Allocations</Link>{" | "}
         <Link to="/admin">Admin</Link>{" | "}
         <Link to="/delivery-sheet">Delivery Sheet</Link>{" | "}
-        <Link to="/status">Allocation Status</Link>{" | "}
-        <Link to="/dashboard">Dashboard</Link>{" | "}
+        <Link to="/status">Allocation Status</Link>
       </nav>
 
       <Routes>
@@ -23,7 +20,6 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/delivery-sheet" element={<DeliverySheet />} />
         <Route path="/status" element={<AllocationStatus />} />
-        <Route path="/dashboard" element={<DeliveryDashboard />} />
       </Routes>
     </BrowserRouter>
   );
